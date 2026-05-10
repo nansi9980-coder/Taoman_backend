@@ -7,7 +7,10 @@ async function bootstrap() {
 
   // Enable CORS for frontend communication
   app.enableCors({
-    origin: true,
+    origin: [
+      process.env.FRONTEND_ADMIN_URL,
+      process.env.FRONTEND_CLIENT_URL,
+    ].filter(Boolean), // Filter out undefined values
     credentials: true,
   });
 
