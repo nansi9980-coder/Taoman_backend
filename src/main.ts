@@ -10,7 +10,7 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_ADMIN_URL,
       process.env.FRONTEND_CLIENT_URL,
-    ].filter(Boolean), // Filter out undefined values
+    ].filter((url): url is string => Boolean(url)), // Filter out undefined values and type guard
     credentials: true,
   });
 
