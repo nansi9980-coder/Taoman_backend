@@ -5,45 +5,39 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ContentService {
   constructor(private prisma: PrismaService) {}
 
-  // ServiceCard CRUD
-  getServiceCards() { return this.prisma.serviceCard.findMany(); }
-  createServiceCard(data: any) { return this.prisma.serviceCard.create({ data }); }
-  updateServiceCard(id: number, data: any) { return this.prisma.serviceCard.update({ where: { id }, data }); }
-  deleteServiceCard(id: number) { return this.prisma.serviceCard.delete({ where: { id } }); }
+  // ── ServiceCard ───────────────────────────────────────────────────────────
 
-  // SiteContent CRUD
-  getSiteContents() { return this.prisma.siteContent.findMany(); }
-  getSiteContentBySection(section: string) { return this.prisma.siteContent.findUnique({ where: { section } }); }
+  getServiceCards() {
+    return this.prisma.serviceCard.findMany();
+  }
+
+  createServiceCard(data: any) {
+    return this.prisma.serviceCard.create({ data });
+  }
+
+  updateServiceCard(id: number, data: any) {
+    return this.prisma.serviceCard.update({ where: { id }, data });
+  }
+
+  deleteServiceCard(id: number) {
+    return this.prisma.serviceCard.delete({ where: { id } });
+  }
+
+  // ── SiteContent (textes éditables) ───────────────────────────────────────
+
+  getSiteContents() {
+    return this.prisma.siteContent.findMany();
+  }
+
+  getSiteContentBySection(section: string) {
+    return this.prisma.siteContent.findUnique({ where: { section } });
+  }
+
   upsertSiteContent(section: string, content: string) {
     return this.prisma.siteContent.upsert({
       where: { section },
       update: { content },
       create: { section, content },
     });
-  }
-
-  // Alias methods for controller
-  getPublicContent() {
-    return this.getServiceCards();
-  }
-
-  getBySlug(slug: string) {
-    return this.getSiteContentBySection(slug);
-  }
-
-  findAll() {
-    return this.getServiceCards();
-  }
-
-  create(data: any) {
-    return this.createServiceCard(data);
-  }
-
-  update(id: number, data: any) {
-    return this.updateServiceCard(id, data);
-  }
-
-  remove(id: number) {
-    return this.deleteServiceCard(id);
   }
 }

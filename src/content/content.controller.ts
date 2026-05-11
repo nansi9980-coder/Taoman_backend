@@ -6,27 +6,63 @@ import { ContentService } from './content.service';
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
 
-  @Get('public')
-  getPublicContent() { return this.contentService.getPublicContent(); }
+  // ── Routes publiques (site vitrine) ──────────────────────────────────────
 
-  @Get('public/:slug')
-  getBySlug(@Param('slug') slug: string) { return this.contentService.getBySlug(slug); }
+  @Get('public')
+  getPublicContent() {
+    return this.contentService.getServiceCards();
+  }
+
+  @Get('services')
+  getPublicServices() {
+    return this.contentService.getServiceCards();
+  }
+
+  @Get('texts')
+  getAllTexts() {
+    return this.contentService.getSiteContents();
+  }
+
+  @Get('texts/:section')
+  getTextBySection(@Param('section') section: string) {
+    return this.contentService.getSiteContentBySection(section);
+  }
+
+  // ── Routes protégées (admin) ──────────────────────────────────────────────
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll() { return this.contentService.findAll(); }
+  findAll() {
+    return this.contentService.getServiceCards();
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() data: any) { return this.contentService.create(data); }
+  create(@Body() data: any) {
+    return this.contentService.createServiceCard(data);
+  }
+
+  @Put('services/:id')
+  @UseGuards(JwtAuthGuard)
+  updateService(@Param('id') id: string, @Body() data: any) {
+    return this.contentService.updateServiceCard(+id, data);
+  }
+
+  @Post('texts')
+  @UseGuards(JwtAuthGuard)
+  upsertText(@Body() body: { section: string; content: string }) {
+    return this.contentService.upsertSiteContent(body.section, body.content);
+  }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() data: any) {
-    return this.contentService.update(+id, data);
+    return this.contentService.updateServiceCard(+id, data);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) { return this.contentService.remove(+id); }
+  remove(@Param('id') id: string) {
+    return this.contentService.deleteServiceCard(+id);
+  }
 }
