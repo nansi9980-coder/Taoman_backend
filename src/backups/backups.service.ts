@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as fs from 'fs';
-import * as path from 'path';
 
 @Injectable()
 export class BackupsService {
@@ -10,10 +8,6 @@ export class BackupsService {
   async createBackup() {
     const timestamp = new Date().toISOString().replace(/[:.T]/g, '-').slice(0, 19);
     const backupName = `backup-${timestamp}.json`;
-    const backupDir = path.join(process.cwd(), 'backups');
-    const backupPath = path.join(backupDir, backupName);
-
-    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
     const data = {
       timestamp: new Date(),
@@ -23,32 +17,42 @@ export class BackupsService {
       investments: await this.prisma.investment.findMany(),
     };
 
-    fs.writeFileSync(backupPath, JSON.stringify(data, null, 2));
+    const sizeBytes = Buffer.byteLength(JSON.stringify(data));
+    const sizeMB = sizeBytes / 1024 / 1024;
+
+    const backup = await this.prisma.backup.create({
+      data: {
+        name: backupName,
+        size: sizeMB,
+        type: 'Manuel',
+        status: 'Complété',
+        duration: '< 1s',
+      },
+    });
 
     return {
-      name: backupName,
-      size: (fs.statSync(backupPath).size / 1024 / 1024).toFixed(2) + ' MB',
-      path: `/backups/${backupName}`,
-      createdAt: new Date()
+      id: backup.id,
+      name: backup.name,
+      size: sizeMB.toFixed(2) + ' MB',
+      type: backup.type,
+      status: backup.status,
+      createdAt: backup.createdAt,
     };
   }
 
-  async getAllBackups() {
-    const backupDir = path.join(process.cwd(), 'backups');
-    if (!fs.existsSync(backupDir)) return [];
-    return fs.readdirSync(backupDir)
-      .filter(file => file.endsWith('.json'))
-      .map(file => ({
-        name: file,
-        path: `/backups/${file}`,
-        createdAt: fs.statSync(path.join(backupDir, file)).birthtime
-      }))
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
-  // Alias methods for controller
   async findAll() {
-    return this.getAllBackups();
+    const backups = await this.prisma.backup.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return backups.map((b) => ({
+      id: b.id,
+      name: b.name,
+      size: b.size.toFixed(2) + ' MB',
+      type: b.type,
+      status: b.status,
+      duration: b.duration,
+      createdAt: b.createdAt,
+    }));
   }
 
   async runBackup() {
@@ -56,15 +60,11 @@ export class BackupsService {
   }
 
   async delete(id: number) {
-    // Delete backup by name/id
-    const backups = await this.getAllBackups();
-    if (backups[id]) {
-      const backupPath = path.join(process.cwd(), 'backups', backups[id].name);
-      if (fs.existsSync(backupPath)) {
-        fs.unlinkSync(backupPath);
-        return { success: true, message: 'Backup deleted' };
-      }
+    const backup = await this.prisma.backup.findUnique({ where: { id } });
+    if (!backup) {
+      return { success: false, message: 'Backup introuvable' };
     }
-    return { success: false, message: 'Backup not found' };
+    await this.prisma.backup.delete({ where: { id } });
+    return { success: true, message: 'Backup supprimé' };
   }
 }

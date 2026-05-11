@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as fs from 'fs';
-import * as path from 'path';
 const PdfPrinter = require('pdfmake');
 
 @Injectable()
@@ -32,8 +30,13 @@ export class QuotesService {
     });
   }
 
-  async submitQuote(data: { title: string; description?: string; clientEmail: string; clientName: string; clientPhone?: string }) {
-    // Find or create client
+  async submitQuote(data: {
+    title: string;
+    description?: string;
+    clientEmail: string;
+    clientName: string;
+    clientPhone?: string;
+  }) {
     let client = await this.prisma.client.findUnique({
       where: { email: data.clientEmail },
     });
@@ -48,7 +51,6 @@ export class QuotesService {
       });
     }
 
-    // Create quote
     return this.prisma.quote.create({
       data: {
         title: data.title,
@@ -65,7 +67,7 @@ export class QuotesService {
   async generatePdf(id: number): Promise<{ url: string }> {
     const quote = await this.prisma.quote.findUnique({
       where: { id },
-      include: { client: true, user: true }
+      include: { client: true, user: true },
     });
 
     if (!quote) throw new Error('Quote not found');
@@ -75,56 +77,55 @@ export class QuotesService {
         normal: 'Helvetica',
         bold: 'Helvetica-Bold',
         italics: 'Helvetica-Oblique',
-        bolditalics: 'Helvetica-BoldOblique'
-      }
+        bolditalics: 'Helvetica-BoldOblique',
+      },
     };
-    
+
     const printer = new PdfPrinter(fonts);
 
     const docDefinition = {
-      defaultStyle: {
-        font: 'Helvetica'
-      },
+      defaultStyle: { font: 'Helvetica' },
       content: [
         { text: 'DEVIS', style: 'header' },
-        { text: `Taoman Groupe\nLomé, Togo`, margin: [0, 10, 0, 20] },
+        { text: 'Taoman Groupe\nLomé, Togo', margin: [0, 10, 0, 20] },
         { text: `Client: ${quote.client?.name || quote.user?.firstName || 'Client'}` },
         { text: `Email: ${quote.client?.email || quote.user?.email || 'N/A'}` },
-        { text: `Téléphone: ${quote.client?.phone || quote.user?.phone || 'N/A'}`, margin: [0, 0, 0, 20] },
+        { text: `Téléphone: ${quote.client?.phone || 'N/A'}`, margin: [0, 0, 0, 20] },
         { text: `Service demandé: ${quote.service || quote.title}`, style: 'subheader' },
         { text: `Description:\n${quote.description || 'N/A'}`, margin: [0, 10, 0, 20] },
-        { text: `Montant estimé: ${quote.amount ? quote.amount + ' FCFA' : 'Sur devis'}`, style: 'total', margin: [0, 20, 0, 0] },
+        {
+          text: `Montant estimé: ${quote.amount ? quote.amount + ' FCFA' : 'Sur devis'}`,
+          style: 'total',
+          margin: [0, 20, 0, 0],
+        },
       ],
       styles: {
         header: { fontSize: 24, bold: true, alignment: 'right' as any },
         subheader: { fontSize: 16, bold: true },
-        total: { fontSize: 18, bold: true, color: '#fca311' }
-      }
+        total: { fontSize: 18, bold: true, color: '#003d9b' },
+      },
     };
 
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    const fileName = `devis_${id}_${Date.now()}.pdf`;
-    const dir = path.join(process.cwd(), 'uploads');
-    const filePath = path.join(dir, fileName);
-    
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
 
+    // Génération en mémoire — pas de fichier sur disque
+    const chunks: Buffer[] = [];
     return new Promise((resolve, reject) => {
-      const stream = fs.createWriteStream(filePath);
-      pdfDoc.pipe(stream);
-      pdfDoc.end();
+      pdfDoc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      pdfDoc.on('end', async () => {
+        const pdfBuffer = Buffer.concat(chunks);
+        const base64 = pdfBuffer.toString('base64');
+        const dataUrl = `data:application/pdf;base64,${base64}`;
 
-      stream.on('finish', async () => {
-        const pdfUrl = `/uploads/${fileName}`;
         await this.prisma.quote.update({
           where: { id },
-          data: { pdfUrl, status: 'Envoyé' }
+          data: { pdfUrl: dataUrl, status: 'Envoyé' },
         });
-        resolve({ url: pdfUrl });
+
+        resolve({ url: dataUrl });
       });
-      stream.on('error', reject);
+      pdfDoc.on('error', reject);
+      pdfDoc.end();
     });
   }
 }

@@ -3,12 +3,16 @@ import { Server } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: [
+      process.env.FRONTEND_ADMIN_URL,
+      process.env.FRONTEND_CLIENT_URL,
+    ].filter(Boolean),
+    credentials: true,
   },
 })
 export class EventsGateway {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   emitLog(log: any) {
     this.server.emit('newLog', log);
