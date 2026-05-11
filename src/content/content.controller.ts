@@ -1,35 +1,32 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { ContentService } from './content.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ContentService } from './content.service';
 
 @Controller('content')
 export class ContentController {
   constructor(private readonly contentService: ContentService) {}
 
-  @Get('services')
-  getServiceCards() { return this.contentService.getServiceCards(); }
+  @Get('public')
+  getPublicContent() { return this.contentService.getPublicContent(); }
 
-  @Post('services')
+  @Get('public/:slug')
+  getBySlug(@Param('slug') slug: string) { return this.contentService.getBySlug(slug); }
+
+  @Get()
   @UseGuards(JwtAuthGuard)
-  createServiceCard(@Body() body: any) { return this.contentService.createServiceCard(body); }
+  findAll() { return this.contentService.findAll(); }
 
-  @Put('services/:id')
+  @Post()
   @UseGuards(JwtAuthGuard)
-  updateServiceCard(@Param('id') id: string, @Body() body: any) { return this.contentService.updateServiceCard(+id, body); }
+  create(@Body() data: any) { return this.contentService.create(data); }
 
-  @Delete('services/:id')
+  @Put(':id')
   @UseGuards(JwtAuthGuard)
-  deleteServiceCard(@Param('id') id: string) { return this.contentService.deleteServiceCard(+id); }
-
-  @Get('texts')
-  getSiteContents() { return this.contentService.getSiteContents(); }
-
-  @Get('texts/:section')
-  getSiteContentBySection(@Param('section') section: string) { return this.contentService.getSiteContentBySection(section); }
-
-  @Post('texts')
-  @UseGuards(JwtAuthGuard)
-  upsertSiteContent(@Body() body: { section: string, content: string }) {
-    return this.contentService.upsertSiteContent(body.section, body.content);
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.contentService.update(+id, data);
   }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string) { return this.contentService.remove(+id); }
 }

@@ -14,6 +14,13 @@ export class LogsController {
 
   @Post()
   async createLog(@Body() body: any) {
-    return this.logsService.createLog(body);
+    return this.logsService.createLog(
+      body.user,
+      body.action,
+      body.resource,
+      body.status,
+      body.ip,
+      body.details
+    );
   }
 }

@@ -24,6 +24,7 @@ import { ThemeModule } from './theme/theme.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { StatsModule } from './stats/stats.module';
 import { EventsModule } from './events/events.module';
+import { ContactsModule } from './contacts/contacts.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EventsModule } from './events/events.module';
     CalendarModule,
     StatsModule,
     EventsModule,
+    ContactsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

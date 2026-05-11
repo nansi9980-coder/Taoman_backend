@@ -21,4 +21,29 @@ export class ContentService {
       create: { section, content },
     });
   }
+
+  // Alias methods for controller
+  getPublicContent() {
+    return this.getServiceCards();
+  }
+
+  getBySlug(slug: string) {
+    return this.getSiteContentBySection(slug);
+  }
+
+  findAll() {
+    return this.getServiceCards();
+  }
+
+  create(data: any) {
+    return this.createServiceCard(data);
+  }
+
+  update(id: number, data: any) {
+    return this.updateServiceCard(id, data);
+  }
+
+  remove(id: number) {
+    return this.deleteServiceCard(id);
+  }
 }

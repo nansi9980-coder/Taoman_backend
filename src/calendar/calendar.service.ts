@@ -37,4 +37,21 @@ export class CalendarService {
   deleteAppointment(id: number) {
     return this.prisma.appointment.delete({ where: { id } });
   }
+
+  // Alias methods for controller
+  findAll() {
+    return this.getAppointments();
+  }
+
+  create(data: any) {
+    return this.createAppointment(data);
+  }
+
+  update(id: number, data: any) {
+    return this.updateAppointment(id, data);
+  }
+
+  remove(id: number) {
+    return this.deleteAppointment(id);
+  }
 }

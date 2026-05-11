@@ -42,4 +42,9 @@ export class JobsService {
   remove(id: number) {
     return this.prisma.job.delete({ where: { id } });
   }
+
+  // Alias for controller
+  findPublic() {
+    return this.findPublished();
+  }
 }

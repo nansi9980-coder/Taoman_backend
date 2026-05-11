@@ -1,21 +1,25 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { CalendarService } from './calendar.service';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CalendarService } from './calendar.service';
 
-@Controller('calendar')
+@Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
   @Get()
-  getAppointments() { return this.calendarService.getAppointments(); }
+  findAll() { return this.calendarService.findAll(); }
 
   @Post()
-  createAppointment(@Body() body: any) { return this.calendarService.createAppointment(body); }
+  create(@Body() data: any) { return this.calendarService.create(data); }
 
   @Put(':id')
-  updateAppointment(@Param('id') id: string, @Body() body: any) { return this.calendarService.updateAppointment(+id, body); }
+  update(@Param('id', ParseIntPipe) id: number, @Body() data: any) {
+    return this.calendarService.update(id, data);
+  }
 
   @Delete(':id')
-  deleteAppointment(@Param('id') id: string) { return this.calendarService.deleteAppointment(+id); }
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.calendarService.remove(id);
+  }
 }

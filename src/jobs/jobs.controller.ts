@@ -7,36 +7,23 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Get('public')
-  findPublished() {
-    return this.jobsService.findPublished();
-  }
+  findPublic() { return this.jobsService.findPublic(); }
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  findAll() {
-    return this.jobsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.jobsService.findOne(+id);
-  }
+  findAll() { return this.jobsService.findAll(); }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() data: { title: string; category?: string; description: string; skills?: string; location?: string; type?: string; startDate?: string; endDate?: string }) {
-    return this.jobsService.create(data);
-  }
+  create(@Body() data: any) { return this.jobsService.create(data); }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() data: Partial<{ title: string; category?: string; description: string; skills?: string; location?: string; type?: string; published: boolean; startDate?: string; endDate?: string }>) {
+  update(@Param('id') id: string, @Body() data: any) {
     return this.jobsService.update(+id, data);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
-    return this.jobsService.remove(+id);
-  }
+  remove(@Param('id') id: string) { return this.jobsService.remove(+id); }
 }
